@@ -1,0 +1,13 @@
+syntax="proto3";
+package trainyao.hostname;
+
+service Hostname {
+    rpc GetHostname(HostnameRequest) returns (HostnameResponse) {}
+}
+
+message HostnameRequest {
+    string test = 1;
+}
+message HostnameResponse {
+    string hostname = 1;
+}

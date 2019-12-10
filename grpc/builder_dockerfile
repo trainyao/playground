@@ -1,0 +1,18 @@
+FROM golang:1.13.5-alpine3.10 as build-image
+
+RUN export GOPATH=/go/src
+COPY ./ /go/src/github.com/trainyao/sofastack_test/grpc
+RUN cd /go/src/github.com/trainyao/sofastack_test/grpc && go build -mod=vendor -o ./bin/test
+
+
+FROM alpine:3.10
+
+ENV TZ Asia/Shanghai
+ENV PATH=$PATH:/test/bin
+WORKDIR /test/bin
+
+COPY --from=build-image /go/src/github.com/trainyao/sofastack_test/grpc/bin/test /test/bin/
+RUN chmod +x /test/bin/test
+
+CMD /test/bin/test
+
