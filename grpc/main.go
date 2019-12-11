@@ -17,9 +17,9 @@ const HOST2_SERVER_PORT = "20002"
 const HOST3_SERVER_PORT = "20003"
 const HOST4_SERVER_PORT = "20004"
 
-const HOST2_SERVER_HOST = "svc_host2"
-const HOST3_SERVER_HOST = "svc_host3"
-const HOST4_SERVER_HOST = "svc_host4"
+const HOST2_SERVER_HOST = "svc-host2"
+const HOST3_SERVER_HOST = "svc-host3"
+const HOST4_SERVER_HOST = "svc-host4"
 
 type portMap struct {
 	ServerPort   string

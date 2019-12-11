@@ -1,0 +1,42 @@
+{{- $root := . -}}
+
+{{ range $k, $v := until (atoi ($root.Values.grpc.pod.count)  ) }}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: host{{ add $v 1 }}
+  labels:
+    app: host{{ add $v 1 }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: host{{ add $v 1 }}
+    spec:
+      containers:
+      - name: details
+        image: trainyao/grpctest:sofastacktest-0.1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2000{{ add $v 1 }}
+        env:
+          - name: GRPCTEST_HOSTNAME
+            value: "HOST{{ add $v 1 }}"
+--- 
+apiVersion: v1      
+kind: Service      
+metadata:       
+  name: svc-host{{ add $v 1 }}
+  labels:                     
+    app: host{{ add $v 1 }}
+    service: details                 
+spec:                         
+  ports:                      
+  - port: {{ add $v 20001 }}
+    name: http                     
+  selector:                   
+    app: host{{ add $v 1 }}
+
+{{ end }}
