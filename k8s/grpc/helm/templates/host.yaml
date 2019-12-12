@@ -16,8 +16,8 @@ spec:
         app: host{{ add $v 1 }}
     spec:
       containers:
-      - name: details
-        image: trainyao/grpctest:sofastacktest-0.1.2
+      - name: s
+        image: trainyao/grpctest:sofastacktest-0.1.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 2000{{ add $v 1 }}
@@ -35,10 +35,13 @@ metadata:
 spec:                         
   ports:                      
   - port: {{ add $v 20001 }}
-    name: http                     
+    name: tcp
   selector:                   
     app: host{{ add $v 1 }}
   {{- if eq $v 0 }}
+  type: NodePort
+  {{- end }}
+  {{- if eq $v 1 }}
   type: NodePort
   {{- end }}
 

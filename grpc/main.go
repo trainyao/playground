@@ -137,7 +137,7 @@ func (s *server) initClient() {
 		return
 	}
 
-	conn, err := grpc.Dial("localhost:"+config.UpstreamPort, grpc.WithInsecure())
+	conn, err := grpc.Dial(config.UpstreamHost+":"+config.UpstreamPort, grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
