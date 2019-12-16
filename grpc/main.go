@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	ot "github.com/opentracing/opentracing-go"
 	hostname "github.com/trainyao/sofastack_test/grpc/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -110,7 +112,15 @@ func (s *server) GetHostname(ctx context.Context, in *hostname.HostnameRequest) 
 
 	var resultString string
 	if s.ClientExist {
-		r, err := s.Client.GetHostname(context.Background(), &hostname.HostnameRequest{Test: ""})
+		var opts []grpc.DialOption
+		opts = append(opts, grpc.WithStreamInterceptor(
+			grpc_opentracing.StreamClientInterceptor(
+				grpc_opentracing.WithTracer(ot.GlobalTracer()))))
+		opts = append(opts, grpc.WithUnaryInterceptor(
+			grpc_opentracing.UnaryClientInterceptor(
+				grpc_opentracing.WithTracer(ot.GlobalTracer()))))
+
+		r, err := s.Client.GetHostname(ctx, &hostname.HostnameRequest{Test: ""})
 		if err != nil {
 			resultString = "query failed, err: " + err.Error()
 		} else {
