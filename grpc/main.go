@@ -76,8 +76,6 @@ func main() {
 		ClientExist: false,
 	}
 
-	hostnameServer.initClient()
-
 	s := grpc.NewServer()
 	hostname.RegisterHostnameServer(s, hostnameServer)
 	reflection.Register(s)
@@ -111,6 +109,8 @@ func (s *server) GetHostname(ctx context.Context, in *hostname.HostnameRequest) 
 	log.Println("called")
 
 	var resultString string
+	s.initClient(ctx)
+
 	if s.ClientExist {
 		r, err := s.Client.GetHostname(ctx, &hostname.HostnameRequest{Test: ""})
 		if err != nil {
@@ -129,7 +129,7 @@ func (s *server) GetHostname(ctx context.Context, in *hostname.HostnameRequest) 
 	return out, nil
 }
 
-func (s *server) initClient() {
+func (s *server) initClient(ctx context.Context) {
 	config, err := getPortConfig(s.Host)
 	if err != nil {
 		panic(err)
@@ -138,7 +138,11 @@ func (s *server) initClient() {
 	if config.UpstreamPort == "" {
 		return
 	}
+	if s.ClientExist {
+		return
+	}
 
+	log.Println("initing client")
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithStreamInterceptor(
 		grpc_opentracing.StreamClientInterceptor(
@@ -148,7 +152,7 @@ func (s *server) initClient() {
 			grpc_opentracing.WithTracer(ot.GlobalTracer()))))
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial(config.UpstreamHost+":"+config.UpstreamPort, opts...)
+	conn, err := grpc.DialContext(ctx, config.UpstreamHost+":"+config.UpstreamPort, opts...)
 	if err != nil {
 		panic(err)
 	}
