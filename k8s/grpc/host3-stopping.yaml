@@ -1,0 +1,41 @@
+---                                                                                                                                                                              
+apiVersion: extensions/v1beta1                                                                                                                                                   
+kind: Deployment                                                                                                                                                                 
+metadata:                                                                                                                                                                        
+  name: host3-stopping
+  labels:                                                                                                                                                                        
+    app: host3                                                                                                                                                                   
+    type: stopping
+spec:                                                                                                                                                                            
+  replicas: 1                                                                                                                                                                    
+  template:                                                                                                                                                                      
+    metadata:                                                                                                                                                                    
+      labels:                                                                                                                                                                    
+        app: host3                                                                                                                                                               
+        type: stopping
+    spec:                                                                                                                                                                        
+      containers:                                                                                                                                                                
+      - name: s                                                                                                                                                                  
+        image: trainyao/grpctest:sofastacktest-0.1.3-stopping
+        imagePullPolicy: IfNotPresent                                                                                                                                            
+        ports:                                                                                                                                                                   
+        - containerPort: 20004                                                                                                                                                   
+        env:                                                                                                                                                                     
+          - name: GRPCTEST_HOSTNAME                                                                                                                                              
+            value: "HOST3"                                                                                                                                                       
+---                                                                                                                                                                              
+apiVersion: v1                                                                                                                                                                   
+kind: Service                                                                                                                                                                    
+metadata:                                                                                                                                                                        
+  name: svc-host3-stopping
+  labels:                                                                                                                                                                        
+    app: host3                                                                                                                                                                   
+    type: stopping
+spec:                                                                                                                                                                            
+  ports:
+  - port: 20003
+    name: grpc-tcp
+  selector:
+    app: host3
+    type: stopping
+
