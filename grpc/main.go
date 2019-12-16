@@ -112,14 +112,6 @@ func (s *server) GetHostname(ctx context.Context, in *hostname.HostnameRequest) 
 
 	var resultString string
 	if s.ClientExist {
-		var opts []grpc.DialOption
-		opts = append(opts, grpc.WithStreamInterceptor(
-			grpc_opentracing.StreamClientInterceptor(
-				grpc_opentracing.WithTracer(ot.GlobalTracer()))))
-		opts = append(opts, grpc.WithUnaryInterceptor(
-			grpc_opentracing.UnaryClientInterceptor(
-				grpc_opentracing.WithTracer(ot.GlobalTracer()))))
-
 		r, err := s.Client.GetHostname(ctx, &hostname.HostnameRequest{Test: ""})
 		if err != nil {
 			resultString = "query failed, err: " + err.Error()
@@ -147,7 +139,16 @@ func (s *server) initClient() {
 		return
 	}
 
-	conn, err := grpc.Dial(config.UpstreamHost+":"+config.UpstreamPort, grpc.WithInsecure())
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithStreamInterceptor(
+		grpc_opentracing.StreamClientInterceptor(
+			grpc_opentracing.WithTracer(ot.GlobalTracer()))))
+	opts = append(opts, grpc.WithUnaryInterceptor(
+		grpc_opentracing.UnaryClientInterceptor(
+			grpc_opentracing.WithTracer(ot.GlobalTracer()))))
+	opts = append(opts, grpc.WithInsecure())
+
+	conn, err := grpc.Dial(config.UpstreamHost+":"+config.UpstreamPort, opts...)
 	if err != nil {
 		panic(err)
 	}
