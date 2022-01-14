@@ -66,6 +66,11 @@ var (
 		"小王": "麻辣烫",
 		"小杰": "螺蛳粉",
 	}
+	buyFoodTimeCostMap = map[string]time.Duration{
+		"珍珠奶茶": time.Second,
+		"麻辣烫":  5 * time.Second,
+		"螺蛳粉":  10 * time.Second,
+	}
 )
 
 // Controller is the controller implementation for Foo resources
@@ -248,9 +253,10 @@ func (c *Controller) syncHandler(key string) error {
 
 	focusFood, ok := foodFocus[c.name]
 	if !ok {
-		utilruntime.HandleError(fmt.Errorf("can't found focus food for %s", c.name))
+		utilruntime.HandleError(fmt.Errorf("%s 朋友圈找不到 %s 的关注食物", goddessMoment.Name, c.name))
 		return nil
 	}
+	klog.Infof("%s 的关注食物是 %s", c.name, focusFood)
 
 	foundFocusFood := false
 	for _, food := range goddessMoment.Spec.FoodDemand {
@@ -261,7 +267,7 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	if !foundFocusFood {
-		klog.Infof("focus food %s for %s is not in goddessMoment %s", focusFood, c.name, key)
+		klog.Infof("%s 关注食物 %s 没有在朋友圈 %s 发现", c.name, focusFood, key)
 		return nil
 	}
 
@@ -276,46 +282,32 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	if foodStatus == nil {
-		utilruntime.HandleError(fmt.Errorf("found focus food %s in spec, but not found in status", focusFood))
+		utilruntime.HandleError(fmt.Errorf("关注食物 %s 在女神朋友圈出现, 但是在status里面没有找到", focusFood))
 		return nil
 	}
+	klog.Infof("朋友圈 %s %s 关注的食物 %s 状态是 %s", goddessMoment.Name, c.name, focusFood, foodStatus.Status)
 
-	if foodStatus.Status != v1.FoodStatusPending {
-		klog.Infof("food %s status not pending: %s", focusFood, foodStatus.Status)
+	// 处理女神朋友圈里关注食物还未被人认领的情况
+	if foodStatus.Status == v1.FoodStatusPending {
+		err = c.handlePending(goddessMoment, index)
+	}
+	// 处理关注食物已经有人认领的情况
+	// 认领的人不是我
+	if foodStatus.ClaimBy != c.name {
+		klog.Infof("朋友圈 %s 食物 %s 已经被人 %s 认领了, 我来的太迟了", goddessMoment.Name, focusFood, foodStatus.ClaimBy)
 		return nil
 	}
-	if c.name == "小杰" {
-		data := `{"op":"replace","path":"/status/foodDemand","value":%s}`
-		foodDemandStatusCopy := goddessMoment.Status.DeepCopy()
-		foodDemandStatusCopy.FoodDemand[index].Status = v1.FoodStatusPendingArrival
-		foodDemandStatusCopy.FoodDemand[index].ClaimTime = metav1.Now()
-		foodDemandStatusCopy.FoodDemand[index].ClaimBy = c.name
-		valueJson, err := json.Marshal(&foodDemandStatusCopy.FoodDemand)
-		if err != nil {
-			utilruntime.HandleError(fmt.Errorf("error when marshal foodDemand status, err: %s", err.Error()))
-			return nil
-		}
-
-		dataJson := fmt.Sprintf(data, valueJson)
-		_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(namespace).Patch(context.TODO(), name,
-			types.JSONPatchType, []byte(dataJson), metav1.PatchOptions{})
-		if err != nil {
-			utilruntime.HandleError(fmt.Errorf("patch goddessMoment %s failed, data: %s, err: %s", name, dataJson, err.Error()))
-			return nil
-		}
-
-		return nil
+	if foodStatus.Status == v1.FoodStatusPendingArrival {
+		// 去购买食物
+		err = c.handlePendingArrival(goddessMoment, index)
 	}
 
-	momentCopy := goddessMoment.DeepCopy()
-	momentCopy.Status.FoodDemand[index].Status = v1.FoodStatusPendingArrival
-	momentCopy.Status.FoodDemand[index].ClaimTime = metav1.Now()
-	momentCopy.Status.FoodDemand[index].ClaimBy = c.name
-
-	_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(namespace).Update(context.TODO(), momentCopy, metav1.UpdateOptions{})
+	// 状态是已到达, 本条朋友圈任务已完成
+	klog.Infof("朋友圈 %s 食物 %s 我已经认领并送到了, 可以不用关注了", goddessMoment, focusFood)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("update goddessMoment %s failed, err: %s", name, err.Error()))
-		return nil
+		err = fmt.Errorf("处理朋友圈更新 %s 失败, err: %s", goddessMoment.Name, err.Error())
+		utilruntime.HandleError(err)
+		return err
 	}
 
 	c.recorder.Event(goddessMoment, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
@@ -333,4 +325,60 @@ func (c *Controller) enqueueGoddessMoment(obj interface{}) {
 		return
 	}
 	c.workqueue.Add(key)
+}
+
+func (c *Controller) handlePending(gm *v1.GoddessMoment, index int) error {
+	focusFood := gm.Status.FoodDemand[index].Name
+	klog.Infof("开始告诉女神 %s 我来送", focusFood)
+	if c.name == "小杰" {
+		data := `{"op":"replace","path":"/status/foodDemand","value":%s}`
+		foodDemandStatusCopy := gm.Status.DeepCopy()
+		foodDemandStatusCopy.FoodDemand[index].Status = v1.FoodStatusPendingArrival
+		foodDemandStatusCopy.FoodDemand[index].ClaimTime = metav1.Now()
+		foodDemandStatusCopy.FoodDemand[index].ClaimBy = c.name
+		valueJson, err := json.Marshal(&foodDemandStatusCopy.FoodDemand)
+		if err != nil {
+			return fmt.Errorf("error when marshal foodDemand status, err: %s", err.Error())
+		}
+
+		dataJson := fmt.Sprintf(data, valueJson)
+		_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Patch(context.TODO(), gm.Name,
+			types.JSONPatchType, []byte(dataJson), metav1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("patch更新朋友圈告诉女神 %s 我来送 %s 失败, err: %s, datajson: %s",
+				gm.Name, focusFood, err.Error(), dataJson)
+		}
+	} else {
+		momentCopy := gm.DeepCopy()
+		momentCopy.Status.FoodDemand[index].Status = v1.FoodStatusPendingArrival
+		momentCopy.Status.FoodDemand[index].ClaimTime = metav1.Now()
+		momentCopy.Status.FoodDemand[index].ClaimBy = c.name
+
+		_, err := c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Update(context.TODO(), momentCopy, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("更新朋友圈 %s 告诉女神 %s 我来送 失败, err: %s",
+				gm.Name, focusFood, err.Error())
+		}
+	}
+	klog.Infof("更新朋友圈 %s 告诉女神送来 %s 成功", gm.Name)
+	return nil
+}
+
+func (c *Controller) handlePendingArrival(gm *v1.GoddessMoment, index int) error {
+	focusFood := gm.Status.FoodDemand[index].Name
+	buyFoodTimeCost := buyFoodTimeCostMap[focusFood]
+	klog.Infof("为朋友圈 %s 购买 %s 需要 %d 秒, 正在前往购买", gm.Name, focusFood, buyFoodTimeCost)
+	time.Sleep(buyFoodTimeCost)
+	klog.Infof("为朋友圈 %s 购买 %s 完成, 更新女神朋友圈", gm.Name, focusFood)
+
+	momentCopy := gm.DeepCopy()
+	momentCopy.Status.FoodDemand[index].Status = v1.FoodStatusArrived
+	momentCopy.Status.FoodDemand[index].ArrivalTime = metav1.Now()
+
+	_, err := c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Update(context.TODO(), momentCopy, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("更新朋友圈 %s 失败, err: %s", gm.Name, err.Error())
+	}
+	klog.Infof("更新朋友圈 %s 成功", gm.Name)
+	return nil
 }
