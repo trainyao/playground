@@ -1,0 +1,6 @@
+from alpine:latest
+
+COPY ./controller /usr/bin/controller
+RUN chmod 550 /usr/bin/controller
+
+ENTRYPOINT ["/usr/bin/controller"]
