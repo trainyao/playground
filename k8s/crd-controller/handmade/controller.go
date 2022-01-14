@@ -32,7 +32,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	appslisters "k8s.io/client-go/listers/apps/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -82,8 +81,6 @@ type Controller struct {
 	// handmadeClientset is a clientset for our own API group
 	handmadeClientset handmadeClientset.Interface
 
-	deploymentsLister    appslisters.DeploymentLister
-	deploymentsSynced    cache.InformerSynced
 	goddessMomentsLister handmadeLister.GoddessMomentLister
 	goddessMomentsSynced cache.InformerSynced
 
@@ -102,7 +99,7 @@ type Controller struct {
 func NewController(
 	name string,
 	kubeclientset kubernetes.Interface,
-	sampleclientset handmadeClientset.Interface,
+	handmadeClientset handmadeClientset.Interface,
 	goddessMomentsInformer handmadeInformers.GoddessMomentInformer) *Controller {
 
 	// Create event broadcaster
@@ -118,7 +115,7 @@ func NewController(
 	controller := &Controller{
 		name:                 name,
 		kubeclientset:        kubeclientset,
-		handmadeClientset:    sampleclientset,
+		handmadeClientset:    handmadeClientset,
 		goddessMomentsLister: goddessMomentsInformer.Lister(),
 		goddessMomentsSynced: goddessMomentsInformer.Informer().HasSynced,
 		workqueue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Foos"),
@@ -150,7 +147,7 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 
 	// Wait for the caches to be synced before starting workers
 	klog.Info("Waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.deploymentsSynced, c.goddessMomentsSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.goddessMomentsSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
