@@ -66,11 +66,6 @@ var (
 		"小王": "麻辣烫",
 		"小杰": "螺蛳粉",
 	}
-	buyFoodTime = map[string]time.Duration{
-		"珍珠奶茶": time.Second,
-		"麻辣烫":  3 * time.Second,
-		"螺蛳粉":  5 * time.Second,
-	}
 )
 
 // Controller is the controller implementation for Foo resources
@@ -284,14 +279,46 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("found focus food %s in spec, but not found in status", focusFood))
 		return nil
 	}
-	if foodStatus.Status == v1.FoodStatusPending {
-		return c.handlePending(goddessMoment, index)
+
+	if foodStatus.Status != v1.FoodStatusPending {
+		klog.Infof("food %s status not pending: %s", focusFood, foodStatus.Status)
+		return nil
 	}
-	if foodStatus.Status == v1.FoodStatusPendingArrival && foodStatus.ClaimBy == c.name {
-		return c.handlePendingArrival(goddessMoment, index, focusFood)
+	if c.name == "小杰" {
+		data := `{"op":"replace","path":"/status/foodDemand","value":%s}`
+		foodDemandStatusCopy := goddessMoment.Status.DeepCopy()
+		foodDemandStatusCopy.FoodDemand[index].Status = v1.FoodStatusPendingArrival
+		foodDemandStatusCopy.FoodDemand[index].ClaimTime = metav1.Now()
+		foodDemandStatusCopy.FoodDemand[index].ClaimBy = c.name
+		valueJson, err := json.Marshal(&foodDemandStatusCopy.FoodDemand)
+		if err != nil {
+			utilruntime.HandleError(fmt.Errorf("error when marshal foodDemand status, err: %s", err.Error()))
+			return nil
+		}
+
+		dataJson := fmt.Sprintf(data, valueJson)
+		_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(namespace).Patch(context.TODO(), name,
+			types.JSONPatchType, []byte(dataJson), metav1.PatchOptions{})
+		if err != nil {
+			utilruntime.HandleError(fmt.Errorf("patch goddessMoment %s failed, data: %s, err: %s", name, dataJson, err.Error()))
+			return nil
+		}
+
+		return nil
 	}
 
-	klog.Infof("food %s status not pending or pendingArrival, or is claimed by other: %s", focusFood, foodStatus.Status, foodStatus.ClaimBy)
+	momentCopy := goddessMoment.DeepCopy()
+	momentCopy.Status.FoodDemand[index].Status = v1.FoodStatusPendingArrival
+	momentCopy.Status.FoodDemand[index].ClaimTime = metav1.Now()
+	momentCopy.Status.FoodDemand[index].ClaimBy = c.name
+
+	_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(namespace).Update(context.TODO(), momentCopy, metav1.UpdateOptions{})
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("update goddessMoment %s failed, err: %s", name, err.Error()))
+		return nil
+	}
+
+	c.recorder.Event(goddessMoment, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
 
@@ -306,56 +333,4 @@ func (c *Controller) enqueueGoddessMoment(obj interface{}) {
 		return
 	}
 	c.workqueue.Add(key)
-}
-
-func (c *Controller) handlePending(gm *v1.GoddessMoment, index int) error {
-	var err error
-	if c.name == "小杰" {
-		data := `{"op":"replace","path":"/status/foodDemand","value":%s}`
-		foodDemandStatusCopy := gm.Status.DeepCopy()
-		foodDemandStatusCopy.FoodDemand[index].Status = v1.FoodStatusPendingArrival
-		foodDemandStatusCopy.FoodDemand[index].ClaimTime = metav1.Now()
-		foodDemandStatusCopy.FoodDemand[index].ClaimBy = c.name
-		valueJson, err := json.Marshal(&foodDemandStatusCopy.FoodDemand)
-		if err != nil {
-			return fmt.Errorf("error when marshal foodDemand status, err: %s", err.Error())
-		}
-
-		dataJson := fmt.Sprintf(data, valueJson)
-		_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Patch(context.TODO(), gm.Name,
-			types.JSONPatchType, []byte(dataJson), metav1.PatchOptions{})
-		if err != nil {
-			return fmt.Errorf("patch goddessMoment %s failed, data: %s, err: %s", name, dataJson, err.Error())
-		}
-	} else {
-		momentCopy := gm.DeepCopy()
-		momentCopy.Status.FoodDemand[index].Status = v1.FoodStatusPendingArrival
-		momentCopy.Status.FoodDemand[index].ClaimTime = metav1.Now()
-		momentCopy.Status.FoodDemand[index].ClaimBy = c.name
-
-		_, err = c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Update(context.TODO(), momentCopy, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("update goddessMoment %s failed, err: %s", name, err.Error())
-		}
-	}
-
-	c.recorder.Event(gm, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
-	return nil
-}
-
-func (c *Controller) handlePendingArrival(gm *v1.GoddessMoment, index int, food string) error {
-	buyFoodCost := buyFoodTime[food]
-	time.Sleep(buyFoodCost)
-
-	gmCopy := gm.DeepCopy()
-	gmCopy.Status.FoodDemand[index].Status = v1.FoodStatusArrived
-	gmCopy.Status.FoodDemand[index].ArrivalTime = metav1.Now()
-
-	_, err := c.handmadeClientset.HandmadeV1().GoddessMoments(gm.Namespace).Update(context.TODO(), gmCopy, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("%s update food %s arrived failed, err: %s", c.name, food, err.Error())
-	}
-
-	c.recorder.Event(gm, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
-	return nil
 }
