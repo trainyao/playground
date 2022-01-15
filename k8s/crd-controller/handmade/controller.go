@@ -287,23 +287,24 @@ func (c *Controller) syncHandler(key string) error {
 	}
 	klog.Infof("朋友圈 %s %s 关注的食物 %s 状态是 %s", goddessMoment.Name, c.name, focusFood, foodStatus.Status)
 
-	// 处理女神朋友圈里关注食物还未被人认领的情况
 	if foodStatus.Status == v1.FoodStatusPending {
+		// 处理女神朋友圈里关注食物还未被人认领的情况
 		err = c.handlePending(goddessMoment, index)
-	}
-	// 处理关注食物已经有人认领的情况
-	// 认领的人不是我
-	if foodStatus.ClaimBy != c.name {
-		klog.Infof("朋友圈 %s 食物 %s 已经被人 %s 认领了, 我来的太迟了", goddessMoment.Name, focusFood, foodStatus.ClaimBy)
-		return nil
-	}
-	if foodStatus.Status == v1.FoodStatusPendingArrival {
-		// 去购买食物
-		err = c.handlePendingArrival(goddessMoment, index)
-	}
+	} else {
+		// 处理关注食物已经有人认领的情况
+		// 认领的人不是我
+		if foodStatus.ClaimBy != c.name {
+			klog.Infof("朋友圈 %s 食物 %s 已经被人 %s 认领了, 我来的太迟了", goddessMoment.Name, focusFood, foodStatus.ClaimBy)
+			return nil
+		}
+		if foodStatus.Status == v1.FoodStatusPendingArrival {
+			// 去购买食物
+			err = c.handlePendingArrival(goddessMoment, index)
+		}
 
-	// 状态是已到达, 本条朋友圈任务已完成
-	klog.Infof("朋友圈 %s 食物 %s 我已经认领并送到了, 可以不用关注了", goddessMoment, focusFood)
+		// 状态是已到达, 本条朋友圈任务已完成
+		klog.Infof("朋友圈 %s 食物 %s 我已经认领并送到了, 可以不用关注了", goddessMoment.Name, focusFood)
+	}
 	if err != nil {
 		err = fmt.Errorf("处理朋友圈更新 %s 失败, err: %s", goddessMoment.Name, err.Error())
 		utilruntime.HandleError(err)
@@ -360,7 +361,7 @@ func (c *Controller) handlePending(gm *v1.GoddessMoment, index int) error {
 				gm.Name, focusFood, err.Error())
 		}
 	}
-	klog.Infof("更新朋友圈 %s 告诉女神送来 %s 成功", gm.Name)
+	klog.Infof("更新朋友圈 %s 告诉女神送来 %s 成功", gm.Name, focusFood)
 	return nil
 }
 
