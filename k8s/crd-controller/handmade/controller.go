@@ -19,10 +19,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	v1 "github.com/trainyao/playground/k8s/crd-controller/handmade/pkg/apis/handmade/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/json"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -368,7 +369,7 @@ func (c *Controller) handlePending(gm *v1.GoddessMoment, index int) error {
 func (c *Controller) handlePendingArrival(gm *v1.GoddessMoment, index int) error {
 	focusFood := gm.Status.FoodDemand[index].Name
 	buyFoodTimeCost := buyFoodTimeCostMap[focusFood]
-	klog.Infof("为朋友圈 %s 购买 %s 需要 %d 秒, 正在前往购买", gm.Name, focusFood, buyFoodTimeCost)
+	klog.Infof("为朋友圈 %s 购买 %s 需要 %d 秒, 正在前往购买", gm.Name, focusFood, buyFoodTimeCost/time.Second)
 	time.Sleep(buyFoodTimeCost)
 	klog.Infof("为朋友圈 %s 购买 %s 完成, 更新女神朋友圈", gm.Name, focusFood)
 
