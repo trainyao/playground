@@ -332,7 +332,7 @@ func (c *Controller) handlePending(gm *v1.GoddessMoment, index int) error {
 	focusFood := gm.Status.FoodDemand[index].Name
 	klog.Infof("开始告诉女神 %s 我来送", focusFood)
 	if c.name == "小杰" {
-		data := `{"op":"replace","path":"/status/foodDemand","value":%s}`
+		data := `[{"op":"replace","path":"/status/foodDemand","value":%s}]`
 		foodDemandStatusCopy := gm.Status.DeepCopy()
 		foodDemandStatusCopy.FoodDemand[index].Status = v1.FoodStatusPendingArrival
 		foodDemandStatusCopy.FoodDemand[index].ClaimTime = metav1.Now()

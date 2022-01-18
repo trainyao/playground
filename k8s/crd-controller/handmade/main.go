@@ -45,8 +45,6 @@ func main() {
 	stopCh := signals.SetupSignalHandler()
 
 	klog.Infof("我是 %s", name)
-	klog.Infof("main %s", masterURL)
-	klog.Infof("kbc %s", kubeconfig)
 
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
