@@ -7,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - kb.crd.playground.trianyao.io
+  - kb.crd.playground.trainyao.io
   resources:
   - goddessmoments
   verbs:
@@ -19,13 +19,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kb.crd.playground.trianyao.io
+  - kb.crd.playground.trainyao.io
   resources:
   - goddessmoments/finalizers
   verbs:
   - update
 - apiGroups:
-  - kb.crd.playground.trianyao.io
+  - kb.crd.playground.trainyao.io
   resources:
   - goddessmoments/status
   verbs:

@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: goddessmoments.kb.crd.playground.trianyao.io
+  name: goddessmoments.kb.crd.playground.trainyao.io
 spec:
-  group: kb.crd.playground.trianyao.io
+  group: kb.crd.playground.trainyao.io
   names:
     kind: GoddessMoment
     listKind: GoddessMomentList

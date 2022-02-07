@@ -8,4 +8,4 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: 1b315e0f.crd.playground.trianyao.io
+  resourceName: 1b315e0f.crd.playground.trainyao.io

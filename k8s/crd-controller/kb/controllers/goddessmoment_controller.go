@@ -33,9 +33,9 @@ type GoddessMomentReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=kb.crd.playground.trianyao.io,resources=goddessmoments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kb.crd.playground.trianyao.io,resources=goddessmoments/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kb.crd.playground.trianyao.io,resources=goddessmoments/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kb.crd.playground.trainyao.io,resources=goddessmoments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kb.crd.playground.trainyao.io,resources=goddessmoments/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kb.crd.playground.trainyao.io,resources=goddessmoments/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
