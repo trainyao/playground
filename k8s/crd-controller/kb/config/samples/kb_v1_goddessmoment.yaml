@@ -1,0 +1,6 @@
+apiVersion: kb.crd.playground.trianyao.io/v1
+kind: GoddessMoment
+metadata:
+  name: goddessmoment-sample
+spec:
+  # TODO(user): Add fields here

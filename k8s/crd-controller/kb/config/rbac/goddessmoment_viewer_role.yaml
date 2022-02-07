@@ -1,0 +1,20 @@
+# permissions for end users to view goddessmoments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: goddessmoment-viewer-role
+rules:
+- apiGroups:
+  - kb.crd.playground.trianyao.io
+  resources:
+  - goddessmoments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kb.crd.playground.trianyao.io
+  resources:
+  - goddessmoments/status
+  verbs:
+  - get
