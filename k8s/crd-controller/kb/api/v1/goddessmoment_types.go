@@ -20,26 +20,43 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// GoddessMomentSpec defines the desired state of GoddessMoment
+//GoddessMomentSpec .
 type GoddessMomentSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// FoodDemand test field
-	FoodDemand string `json:"foodDemand,omitempty"`
+	FoodDemand []FoodDemand `json:"foodDemand,omitempty"`
 }
 
-// GoddessMomentStatus defines the observed state of GoddessMoment
+//FoodDemand .
+type FoodDemand struct {
+	Name string `json:"name"`
+}
+
+//GoddessMomentStatus .
 type GoddessMomentStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	FoodDemand []FoodDemandStatus `json:"foodDemand,omitempty"`
 }
+
+//FoodDemandStatus .
+type FoodDemandStatus struct {
+	Name        string      `json:"name,omitempty"`
+	Status      FoodStatus  `json:"status,omitempty"`
+	ClaimTime   metav1.Time `json:"claimTime,omitempty"`
+	ArrivalTime metav1.Time `json:"arrivalTime,omitempty"`
+	ClaimBy     string      `json:"claimBy,omitempty"`
+}
+
+//FoodStatus .
+type FoodStatus string
+
+const (
+	//FoodStatusPending .
+	FoodStatusPending = "Pending"
+	//FoodStatusPendingArrival .
+	FoodStatusPendingArrival = "PendingArrival"
+	//FoodStatusArrived .
+	FoodStatusArrived = "Arrived"
+)
 
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
 
 // GoddessMoment is the Schema for the goddessmoments API
 type GoddessMoment struct {
