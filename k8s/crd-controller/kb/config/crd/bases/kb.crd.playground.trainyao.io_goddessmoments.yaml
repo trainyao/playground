@@ -34,20 +34,45 @@ spec:
           metadata:
             type: object
           spec:
-            description: GoddessMomentSpec defines the desired state of GoddessMoment
+            description: GoddessMomentSpec .
             properties:
               foodDemand:
-                description: FoodDemand test field
-                type: string
+                items:
+                  description: FoodDemand .
+                  properties:
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
             type: object
           status:
-            description: GoddessMomentStatus defines the observed state of GoddessMoment
+            description: GoddessMomentStatus .
+            properties:
+              foodDemand:
+                items:
+                  description: FoodDemandStatus .
+                  properties:
+                    arrivalTime:
+                      format: date-time
+                      type: string
+                    claimBy:
+                      type: string
+                    claimTime:
+                      format: date-time
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      description: FoodStatus .
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 status:
   acceptedNames:
     kind: ""
