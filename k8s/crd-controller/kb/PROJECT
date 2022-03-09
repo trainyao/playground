@@ -1,0 +1,16 @@
+domain: crd.playground.trainyao.io
+layout:
+- go.kubebuilder.io/v3
+projectName: kb
+repo: github.com/trainyao/playground/k8s/crd-controller/kb
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: crd.playground.trainyao.io
+  group: kb
+  kind: GoddessMoment
+  path: github.com/trainyao/playground/k8s/crd-controller/kb/api/v1
+  version: v1
+version: "3"

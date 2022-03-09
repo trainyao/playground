@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xiaojie
+spec:
+  selector:
+    matchLabels:
+      controller: xiaojie
+  template:
+    metadata:
+      labels:
+        controller: xiaojie
+    spec:
+      containers:
+      - args: 
+        - -name=小杰
+        image: github.com/trainyao/playground/crd-controller/kb:latest
+        imagePullPolicy: IfNotPresent
+        name: controller
+        env:
+        - name: KUBECONFIG
+          value: /tmp/kubeconfig
+        volumeMounts:
+        - mountPath: /tmp/kubeconfig
+          name: kubeconfig
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /home/trainyao/.kube/config
+        name: kubeconfig

@@ -1,0 +1,26 @@
+apiVersion: kb.crd.playground.trainyao.io/v1
+kind: GoddessMoment
+metadata:
+  name: wantfood
+spec:
+  foodDemand:
+  - name: 珍珠奶茶
+  - name: 麻辣烫
+  - name: 螺蛳粉
+status:
+  foodDemand:
+  - name: 珍珠奶茶
+    status: Pending
+    claimBy: ""
+    claimTime: "1970-01-01T00:00:00Z"
+    arrivalTime: "1970-01-01T00:00:00Z"
+  - name: 麻辣烫
+    status: Pending
+    claimBy: ""
+    claimTime: "1970-01-01T00:00:00Z"
+    arrivalTime: "1970-01-01T00:00:00Z"
+  - name: 螺蛳粉
+    status: Pending
+    claimBy: ""
+    claimTime: "1970-01-01T00:00:00Z"
+    arrivalTime: "1970-01-01T00:00:00Z"

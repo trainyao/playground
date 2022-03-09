@@ -1,0 +1,24 @@
+# permissions for end users to edit goddessmoments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: goddessmoment-editor-role
+rules:
+- apiGroups:
+  - kb.crd.playground.trainyao.io
+  resources:
+  - goddessmoments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kb.crd.playground.trainyao.io
+  resources:
+  - goddessmoments/status
+  verbs:
+  - get
